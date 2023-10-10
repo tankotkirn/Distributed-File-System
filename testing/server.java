@@ -1,33 +1,70 @@
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
 
-public class server {
-    public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = null;
-
+public class FileServer {
+    public static void main(String[] args) {
+        final int PORT = 12345;
+        
         try {
-            serverSocket = new ServerSocket(4444);
+            ServerSocket serverSocket = new ServerSocket(PORT);
+            System.out.println("Server is listening on port " + PORT);
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("Client connected: " + clientSocket.getInetAddress().getHostAddress());
+
+                // Create a new thread to handle the client
+                Thread clientHandler = new Thread(new ClientHandler(clientSocket));
+                clientHandler.start();
+            }
         } catch (IOException e) {
-            System.err.println("Could not listen on port: 4444.");
-            System.exit(1);
+            e.printStackTrace();
+        }
+    }
+    
+    static class ClientHandler implements Runnable {
+        private Socket clientSocket;
+        
+        public ClientHandler(Socket socket) {
+            this.clientSocket = socket;
         }
 
-        Socket clientSocket = null;
-        System.out.println("Waiting for connection...");
+        @Override
+        public void run() {
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
 
-        try {
-            clientSocket = serverSocket.accept();
-            System.out.println("Connection established with client: " + clientSocket.getInetAddress().getHostName());
-        } catch (IOException e) {
-            System.err.println("Accept failed.");
-            System.exit(1);
+                String fileName = reader.readLine();
+                System.out.println("Client requested file: " + fileName);
+
+                File file = new File(fileName);
+                if (file.exists()) {
+                    writer.write("OK\n");
+                    writer.flush();
+
+                    FileInputStream fileInputStream = new FileInputStream(file);
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+
+                    while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                        clientSocket.getOutputStream().write(buffer, 0, bytesRead);
+                    }
+
+                    fileInputStream.close();
+                    System.out.println("File sent successfully.");
+                } else {
+                    writer.write("File not found\n");
+                    writer.flush();
+                    System.out.println("File not found.");
+                }
+
+                clientSocket.close();
+                System.out.println("Client disconnected: " + clientSocket.getInetAddress().getHostAddress());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        out.println("Hello, client!");
-
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
     }
 }
