@@ -1,33 +1,41 @@
-package testing;
+import java.io.*;
+import java.net.Socket;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+public class FileClient {
+    public static void main(String[] args) {
+        final String SERVER_IP = "127.0.0.1";
+        final int SERVER_PORT = 12345;
+        final String FILE_TO_REQUEST = "file_to_request.txt";
+        final String SAVE_PATH = "received_file.txt";
+        
+        try {
+            Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-public class client {
-    public static void main(String[] args) throws IOException {
-        // Define the server's IP address and port number
-        InetAddress serverAddress = InetAddress.getByName("localhost");
-        int serverPort = 12345;
+            // Request the file from the server
+            writer.write(FILE_TO_REQUEST + "\n");
+            writer.flush();
 
-        // Create a DatagramSocket object to send and receive UDP packets
-        DatagramSocket socket = new DatagramSocket();
+            String response = reader.readLine();
+            if (response != null && response.equals("OK")) {
+                FileOutputStream fileOutputStream = new FileOutputStream(SAVE_PATH);
+                byte[] buffer = new byte[1024];
+                int bytesRead;
 
-        // Send a message to the server
-        String message = "Hello, server!";
-        byte[] buffer = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, serverAddress, serverPort);
-        socket.send(packet);
+                while ((bytesRead = socket.getInputStream().read(buffer)) != -1) {
+                    fileOutputStream.write(buffer, 0, bytesRead);
+                }
 
-        // Receive a message from the server
-        buffer = new byte[1024];
-        packet = new DatagramPacket(buffer, buffer.length);
-        socket.receive(packet);
-        String receivedMessage = new String(packet.getData(), 0, packet.getLength());
-        System.out.println("Received message from server: " + receivedMessage);
+                fileOutputStream.close();
+                System.out.println("File received and saved as " + SAVE_PATH);
+            } else {
+                System.out.println("File not found on the server.");
+            }
 
-        // Close the socket
-        socket.close();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
