@@ -2,10 +2,10 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class FileServer {
+public class MultiThreadedFileServer {
     public static void main(String[] args) {
         final int PORT = 12345;
-        
+
         try {
             ServerSocket serverSocket = new ServerSocket(PORT);
             System.out.println("Server is listening on port " + PORT);
@@ -22,10 +22,10 @@ public class FileServer {
             e.printStackTrace();
         }
     }
-    
+
     static class ClientHandler implements Runnable {
         private Socket clientSocket;
-        
+
         public ClientHandler(Socket socket) {
             this.clientSocket = socket;
         }
