@@ -1,25 +1,28 @@
 import java.io.*;
 import java.net.Socket;
 
-public class FileClient {
+public class client {
     public static void main(String[] args) {
-        final String SERVER_IP = "127.0.0.1";
-        final int SERVER_PORT = 12345;
-        final String FILE_TO_REQUEST = "file_to_request.txt";
-        final String SAVE_PATH = "received_file.txt";
+        final String SERVER_IP = "10.20.24.70";
+        final int SERVER_PORT = 8080;
         
         try {
             Socket socket = new Socket(SERVER_IP, SERVER_PORT);
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-            // Request the file from the server
-            writer.write(FILE_TO_REQUEST + "\n");
+            // Input the file name to request
+            System.out.print("Enter the file name to request: ");
+            String fileName = new BufferedReader(new InputStreamReader(System.in)).readLine();
+
+            // Send the requested file name to the server
+            writer.write(fileName + "\n");
             writer.flush();
 
             String response = reader.readLine();
             if (response != null && response.equals("OK")) {
-                FileOutputStream fileOutputStream = new FileOutputStream(SAVE_PATH);
+                // Receive and save the file with the same name
+                FileOutputStream fileOutputStream = new FileOutputStream(fileName);
                 byte[] buffer = new byte[1024];
                 int bytesRead;
 
@@ -28,7 +31,7 @@ public class FileClient {
                 }
 
                 fileOutputStream.close();
-                System.out.println("File received and saved as " + SAVE_PATH);
+                System.out.println("File received and saved as " + fileName);
             } else {
                 System.out.println("File not found on the server.");
             }
