@@ -2,9 +2,9 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class MultiThreadedFileServer {
+public class server {
     public static void main(String[] args) {
-        final int PORT = 12345;
+        final int PORT = 8080;
 
         try {
             ServerSocket serverSocket = new ServerSocket(PORT);
@@ -33,30 +33,30 @@ public class MultiThreadedFileServer {
         @Override
         public void run() {
             try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+                DataInputStream dataInputStream = new DataInputStream(clientSocket.getInputStream());
 
-                String fileName = reader.readLine();
+                // Read the file name from the client
+                String fileName = dataInputStream.readUTF();
                 System.out.println("Client requested file: " + fileName);
 
                 File file = new File(fileName);
                 if (file.exists()) {
-                    writer.write("OK\n");
-                    writer.flush();
+                    DataOutputStream dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+                    dataOutputStream.writeUTF("OK");
 
                     FileInputStream fileInputStream = new FileInputStream(file);
                     byte[] buffer = new byte[1024];
                     int bytesRead;
 
                     while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                        clientSocket.getOutputStream().write(buffer, 0, bytesRead);
+                        dataOutputStream.write(buffer, 0, bytesRead);
                     }
 
                     fileInputStream.close();
                     System.out.println("File sent successfully.");
                 } else {
-                    writer.write("File not found\n");
-                    writer.flush();
+                    DataOutputStream dataOutputStream = new DataOutputStream(clientSocket.getOutputStream());
+                    dataOutputStream.writeUTF("File not found");
                     System.out.println("File not found.");
                 }
 
