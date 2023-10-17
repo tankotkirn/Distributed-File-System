@@ -1,7 +1,7 @@
 import java.io.*;
 import java.net.Socket;
 
-public class UpdatedFileClient {
+public class naming_server {
     public static void main(String[] args) {
         final String SERVER_IP = "127.0.0.1";
         final int SERVER_PORT = 12345;
